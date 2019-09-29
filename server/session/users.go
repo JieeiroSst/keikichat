@@ -25,8 +25,9 @@ func init(){
 		encryptionKeyOne,
 		)
 	store.Options=&sessions.Options{
-		maxAge:60*15,
-		httpOnly:true,
+		Path:     "/",
+		MaxAge:60*15,
+		HttpOnly:true,
 	}
 	gob.Register(user{})
 	tpl=template.Must(template.ParseGlob("templates/*.html"))
