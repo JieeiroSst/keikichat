@@ -1,18 +1,23 @@
 package config
 
-import (
-	"github.com/micro/go-micro/config"
-)
 var (
 	NameDB    ="mysql"
 	Mysqluser = "root"
 	Mysqlpass = " "
-	Mysqlurls = "127.0.0.1"
-	Mysqldb   = "keikibook"
-	Mysqlport ="8080"
+	Mysqldb   = "keiki"
+	MyPort="3306"
+	MyUrl="localhost"
 )
 
-func init(){
-	_ = config.LoadFile("./../../conf/web.conf")
-
-}
+type(
+	Servers struct{
+		Port string `json:"port"`
+		Host string `json:"host"`
+	}
+	Databases struct{
+		SystemDB string `json:"system_db"`
+		User string `json:"user"`
+		Password string `json:"password"`
+		NameDB string `json:"name_db"`
+	}
+)

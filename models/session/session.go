@@ -1,9 +1,12 @@
 package session
 
 import (
+	"fmt"
+	"github.com/gorilla/sessions"
 	"log"
 	"net/http"
 	"keiki/controllers/User"
+	"keiki/models/cookie"
 )
 var users=User.User{
 	Name:             "",
@@ -12,8 +15,31 @@ var users=User.User{
 	Password:         "",
 	VerifiedPassword: "",
 }
+var store *sessions.CookieStore
+func init(){
+	store=sessions.NewCookieStore([]byte("secret-key"))
+}
+
+func Home(w http.ResponseWriter, r *http.Request){
+	session,_:=store.Get(r,"session-name")
+	var authenticated interface{} = session.Values["authenticated"]
+	if authenticated != nil {
+		isAuthenticated := session.Values["authenticated"].(bool)
+		if !isAuthenticated {
+			http.Error(w, "You are unauthorized to view the page",
+				http.StatusForbidden)
+			return
+		}
+		_, _ = fmt.Fprintln(w, "Home Page")
+	}else
+	{
+		http.Error(w, "You are unauthorized to view the page",
+			http.StatusForbidden)
+		return
+	}
+}
 // gets form values and checks user credentials
-func login(w http.ResponseWriter,r *http.Request){
+func Login(w http.ResponseWriter,r *http.Request){
 	session,err:=store.Get(r,"cookie-name")
 	if err!=nil{
 		log.Fatal(err)
@@ -42,7 +68,7 @@ func login(w http.ResponseWriter,r *http.Request){
 	http.Redirect(w,r,"/secret",http.StatusFound)
 }
 //removes user credentials and clears the session cookie
-func logout(w http.ResponseWriter,r *http.Request){
+func Logout(w http.ResponseWriter,r *http.Request){
 	session,err:=store.Get(r,"cookie-name")
 	if err!=nil{
 		log.Fatal(err)
@@ -54,54 +80,7 @@ func logout(w http.ResponseWriter,r *http.Request){
 	if err!=nil{
 		log.Fatal(err)
 	}
+	cookie.ClearSession(w)
 	http.Redirect(w,r,"/",http.StatusFound)
 }
-//serves the index page
-func index(w http.ResponseWriter,r *http.Request){
-	session,err:=store.Get(r,"cookie-name")
-	if err!=nil{
-		log.Fatal(err)
-	}
-	user,_:=getUser(session)
-	_ = tpl.ExecuteTemplate(w, "index.html", user)
-}
-// secret displays the secret message for authorized users
-// serves the secret page if authentication is successful
-func secret(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, "cookie-name")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
 
-	user ,_:= getUser(session)
-
-	if auth := user.Authenticated; !auth {
-		session.AddFlash("You don't have access!")
-		err = session.Save(r, w)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		http.Redirect(w, r, "/forbidden", http.StatusFound)
-		return
-	}
-
-	_ = tpl.ExecuteTemplate(w, "secret.html", users.Username)
-}
-// shows an error when accessing without authentication
-func forbidden(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, "cookie-name")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	flashMessages := session.Flashes()
-	err = session.Save(r, w)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	_ = tpl.ExecuteTemplate(w, "forbidden.html", flashMessages)
-}
