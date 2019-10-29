@@ -11,13 +11,14 @@ var(
 	nameDB=config.NameDB
 	userDB=config.Mysqluser
 	userpass=config.Mysqlpass
-	urls=config.Mysqlurls
-	port=config.Mysqlport
 	mysqlDB=config.Mysqldb
+	myPort=config.MyPort
+	myUrl=config.MyUrl
 )
 
+
 func init(){
-	db,err:=sql.Open("nameDB","userDB:userpass@tcp(urls:port)/mysqlDB")
+	db,err:=sql.Open(nameDB,userDB+":"+userpass+"@("+myUrl+":"+myPort+")/"+mysqlDB)
 	if err!=nil{
 		log.Fatal(err)
 	}
@@ -26,6 +27,7 @@ func init(){
 	if err:=db.Ping(); err!=nil{
 		log.Fatal(err)
 	}
+
 	log.Println("connected to mysql database")
 }
 
